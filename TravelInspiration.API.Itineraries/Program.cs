@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Configuration;
 using TravelInspiration.API.Itineraries.DbContexts;
 
 var host = new HostBuilder()
@@ -15,21 +14,35 @@ var host = new HostBuilder()
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
-        var credential = new DefaultAzureCredential();
+        var connectionString = appBuilder.Configuration
+            .GetConnectionString("TravelInspirationDbConnection");
 
-        // Get a token to access Azure SQL
-        var accessTokenResponse = credential.GetToken(
-            new Azure.Core.TokenRequestContext(["https://database.windows.net/.default"]));
+        var isLocal = appBuilder.HostingEnvironment.IsDevelopment();
 
-        var sqlConnection = new SqlConnection(
-            appBuilder.Configuration.GetConnectionString("TravelInspirationDbConnection"))
+        if (isLocal)
         {
-            AccessToken = accessTokenResponse.Token
-        };
+            // Local: directly use connection string (SQL Server / Docker)
+            services.AddDbContext<TravelInspirationDbContext>(options =>
+                options.UseSqlServer(connectionString,
+                    sqlOptions => sqlOptions.EnableRetryOnFailure()));
+        }
+        else
+        {
+            // Azure: use Managed Identity token
+            var credential = new DefaultAzureCredential();
+            var accessTokenResponse = credential.GetToken(
+                new Azure.Core.TokenRequestContext(
+                    ["https://database.windows.net/.default"]));
 
-        services.AddDbContext<TravelInspirationDbContext>(options =>
-            options.UseSqlServer(sqlConnection,
-                sqlOptions => sqlOptions.EnableRetryOnFailure()));
+            var sqlConnection = new SqlConnection(connectionString)
+            {
+                AccessToken = accessTokenResponse.Token
+            };
+
+            services.AddDbContext<TravelInspirationDbContext>(options =>
+                options.UseSqlServer(sqlConnection,
+                    sqlOptions => sqlOptions.EnableRetryOnFailure()));
+        }
     })
     .Build();
 

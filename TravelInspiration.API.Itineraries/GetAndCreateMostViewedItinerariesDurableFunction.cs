@@ -27,8 +27,9 @@ public class GetAndCreateMostViewedItinerariesDurableFunction(
         };
 
         var getItinerariesResponse = await context.CallHttpAsync(
-            HttpMethod.Get, 
+            HttpMethod.Get,
             new Uri($"{hostAddress}/itineraries"),
+            content: null,
             retryOptions: httpRetryOptions);
 
         if (getItinerariesResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -39,7 +40,7 @@ public class GetAndCreateMostViewedItinerariesDurableFunction(
         var createMostViewedItinerariesResponse = await context.CallHttpAsync(
           HttpMethod.Post,
           new Uri($"{hostAddress}/mostvieweditineraries"),
-          getItinerariesResponse.Content ?? "",
+          content: getItinerariesResponse.Content ?? "",
           retryOptions: httpRetryOptions);
 
         if (createMostViewedItinerariesResponse.StatusCode != System.Net.HttpStatusCode.OK)
