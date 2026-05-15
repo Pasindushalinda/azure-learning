@@ -57,7 +57,7 @@ public static class GetAndCreateMostViewedItinerariesDurableFunction
 
         // Get host address
         var pathIndex = req.Url.LocalPath.IndexOf("generatemostvieweditineraries", StringComparison.OrdinalIgnoreCase);
-        var basePath = pathIndex > 0 ? req.Url.LocalPath.Substring(0, pathIndex - 1) : string.Empty;
+        var basePath = pathIndex > 0 ? req.Url.LocalPath.Substring(0, pathIndex - 1) : "/api";
         string hostAddress = $"{req.Url.Scheme}://{req.Url.Host}:{req.Url.Port}{basePath}";
 
         // Function input comes from the request content.

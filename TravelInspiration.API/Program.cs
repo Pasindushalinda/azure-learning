@@ -14,9 +14,16 @@ builder.Services.RegisterApplicationServices();
 builder.Services.RegisterPersistenceServices(builder.Configuration);
 builder.Services.AddAzureClients(clientBuilder =>
 {
-    clientBuilder.AddBlobServiceClient(builder.Configuration["ConnectionStrings:TravelInspirationStorageConnectionString:blobServiceUri"]!).WithName("ConnectionStrings:TravelInspirationStorageConnectionString");
-    clientBuilder.AddQueueServiceClient(builder.Configuration["ConnectionStrings:TravelInspirationStorageConnectionString:queueServiceUri"]!).WithName("ConnectionStrings:TravelInspirationStorageConnectionString");
-    clientBuilder.AddTableServiceClient(builder.Configuration["ConnectionStrings:TravelInspirationStorageConnectionString:tableServiceUri"]!).WithName("ConnectionStrings:TravelInspirationStorageConnectionString");
+    var storageConnStr = builder.Configuration.GetConnectionString("TravelInspirationStorageConnectionString")!;
+    clientBuilder.AddBlobServiceClient(
+        builder.Configuration["ConnectionStrings:TravelInspirationStorageConnectionString:blobServiceUri"] ?? storageConnStr)
+        .WithName("ConnectionStrings:TravelInspirationStorageConnectionString");
+    clientBuilder.AddQueueServiceClient(
+        builder.Configuration["ConnectionStrings:TravelInspirationStorageConnectionString:queueServiceUri"] ?? storageConnStr)
+        .WithName("ConnectionStrings:TravelInspirationStorageConnectionString");
+    clientBuilder.AddTableServiceClient(
+        builder.Configuration["ConnectionStrings:TravelInspirationStorageConnectionString:tableServiceUri"] ?? storageConnStr)
+        .WithName("ConnectionStrings:TravelInspirationStorageConnectionString");
 });
 builder.Services.Configure<Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration>(config =>
 {
