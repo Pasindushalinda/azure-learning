@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Extensions.Sql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TravelInspiration.API.Itineraries.DbContexts;
-using TravelInspiration.API.Itineraries.Models;
+using TravelInspiration.API.Itineraries.Model;
 
 namespace TravelInspiration.API.Itineraries;
 
@@ -20,13 +19,13 @@ public class GetItinerariesFunction(ILogger<GetItinerariesFunction> logger,
 
     [Function("GetItinerariesFunction")]
     public async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "itineraries")] 
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "itineraries")] 
         HttpRequest req)
     {
         string? searchForValue = req.Query["SearchFor"];
 
         if (!int.TryParse(_configuration["MaximumAmountOfItinerariesToReturn"],
-            out int maximumAmountOfItinerariesToReturn))
+                out int maximumAmountOfItinerariesToReturn))
         {
             throw new Exception("MaximumAmountOfItinerariesToReturn setting is missing or its value is not a valid integer.");
         }
@@ -34,8 +33,8 @@ public class GetItinerariesFunction(ILogger<GetItinerariesFunction> logger,
 
         var itineraryEntities = await _dbContext.Itineraries
             .Where(i => searchForValue == null ||
-                           i.Name.Contains(searchForValue) ||
-                           (i.Description != null && i.Description.Contains(searchForValue)))
+                        i.Name.Contains(searchForValue) ||
+                        (i.Description != null && i.Description.Contains(searchForValue)))
             .OrderBy(i => i.Name)
             .Take(maximumAmountOfItinerariesToReturn)
             .ToListAsync();

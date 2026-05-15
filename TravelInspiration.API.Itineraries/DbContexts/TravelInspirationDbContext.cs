@@ -9,7 +9,7 @@ public sealed class TravelInspirationDbContext(
     public DbSet<Itinerary> Itineraries => Set<Itinerary>(); 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
-    { 
+    {  
         base.OnModelCreating(modelBuilder);
     }
 

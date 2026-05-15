@@ -3,19 +3,14 @@ using Microsoft.Azure.Functions.Worker.Extensions.DurableTask.Http;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 
 namespace TravelInspiration.API.Itineraries;
 
-public class GetAndCreateMostViewedItinerariesDurableFunction(
-    IConfiguration configuration)
+public static class GetAndCreateMostViewedItinerariesDurableFunction
 {
-    private readonly IConfiguration _configuration = configuration;
-
     [Function(nameof(GetAndCreateMostViewedItinerariesDurableFunction))]
-    public async Task<string> RunOrchestrator(
+    public static async Task<string> RunOrchestrator(
         [OrchestrationTrigger] TaskOrchestrationContext context)
     {
         var hostAddress = context.GetInput<string>();
@@ -38,10 +33,10 @@ public class GetAndCreateMostViewedItinerariesDurableFunction(
         }
 
         var createMostViewedItinerariesResponse = await context.CallHttpAsync(
-          HttpMethod.Post,
-          new Uri($"{hostAddress}/mostvieweditineraries"),
-          content: getItinerariesResponse.Content ?? "",
-          retryOptions: httpRetryOptions);
+            HttpMethod.Post,
+            new Uri($"{hostAddress}/mostvieweditineraries"),
+            content: getItinerariesResponse.Content ?? "",
+            retryOptions: httpRetryOptions);
 
         if (createMostViewedItinerariesResponse.StatusCode != System.Net.HttpStatusCode.OK)
         {
@@ -49,19 +44,21 @@ public class GetAndCreateMostViewedItinerariesDurableFunction(
         }
 
         return "Most viewed itineraries created.";
-    } 
+    }
 
     [Function("GetAndCreateMostViewedItinerariesDurableFunction_HttpStart")]
-    public async Task<HttpResponseData> HttpStart(
-        [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "generatemostvieweditineraries")] HttpRequestData req,
+    public static async Task<HttpResponseData> HttpStart(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")]
+        HttpRequestData req,
         [DurableClient] DurableTaskClient client,
         FunctionContext executionContext)
     {
         ILogger logger = executionContext.GetLogger("GetAndCreateMostViewedItinerariesDurableFunction_HttpStart");
 
         // Get host address
-        string hostAddress = $"{req.Url.Scheme}://{req.Url.Host}:{req.Url.Port}" +
-            $"{req.Url.LocalPath.Substring(0, req.Url.LocalPath.IndexOf("generatemostvieweditineraries")-1)}";
+        var pathIndex = req.Url.LocalPath.IndexOf("generatemostvieweditineraries", StringComparison.OrdinalIgnoreCase);
+        var basePath = pathIndex > 0 ? req.Url.LocalPath.Substring(0, pathIndex - 1) : string.Empty;
+        string hostAddress = $"{req.Url.Scheme}://{req.Url.Host}:{req.Url.Port}{basePath}";
 
         // Function input comes from the request content.
         string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(

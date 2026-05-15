@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using TravelInspiration.API.Itineraries.Models;
+using TravelInspiration.API.Itineraries.Model;
 
 namespace TravelInspiration.API.Itineraries;
 
@@ -17,7 +17,7 @@ public class CreateMostViewedItinerariesFunction
     }
 
     [Function("CreateMostViewedItinerariesFunction")]
-    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "post", 
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", 
         Route = "mostvieweditineraries")] HttpRequest req)
     {
         // Read request body 
